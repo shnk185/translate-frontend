@@ -18,7 +18,7 @@ export default function App() {
         setSaved(false)
         setUnknown(new Set())
         try {
-            setResult(await translate({query, source_lang: 'English', dest_lang: 'Vietnamese (Northern)', preset }))
+            setResult(await translate({query, source_lang: 'Vietnamese (Northern)', dest_lang: 'English', preset }))
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Request failed')
         } finally {
@@ -51,30 +51,40 @@ export default function App() {
     }
 
     return (
-        <main>
-            <textarea value={query} onChange={e => setQuery(e.target.value)}></textarea>
-            <button onClick={handleTranslate} disabled={loading || !query}>
+        <main className="mx-auto max-w-2xl space-y-6 p-6">
+            <div className="space-y-3">
+            <textarea className="h-28 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                      value={query} onChange={e => setQuery(e.target.value)}></textarea>
+            <button
+                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                onClick={handleTranslate} disabled={loading || !query}>
                 {loading ? 'Translating...' : 'Translate'}
             </button>
-            {error && <p role="alert">{error}</p>}
+            </div>
+            {error && (<p role="alert" className="rounded-lg bg-red-50 p-3 text-red-700">{error}</p>)}
             {result && (
-                <>
-                    <h2>{result.translation}</h2>
-                    <ul>
+                <section className="space-y-4">
+                    <p className="text-lg">{result.translation}</p>
+                    <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200">
                         {result.words.map((w) => (
-                            <li key={w.id}>
-                                <strong>{w.chunk}</strong> - {w.meaning} <em>{w.known ? 'known' : 'new'}</em>
-                                <button onClick={() => toggle(w.id)} aria-pressed={unknown.has(w.id)}>
+                            <li key={w.id} className="flex items-center justify-between gap-3 p-3">
+                                <strong>{w.chunk}</strong> - <span className="text-gray-500">{w.meaning}</span> <em>{w.known ? 'known' : 'new'}</em>
+                                <button onClick={() => toggle(w.id)} aria-pressed={unknown.has(w.id)}
+                                        className={
+                                          unknown.has(w.id)
+                                              ? 'rounded-full bg-red-100 px-3 py-1 text-sm text-red-700'
+                                              : 'rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600'
+                                      } >
                                     {unknown.has(w.id) ? "Didn't know" : 'Knew it'}
                                 </button>
                             </li>
                         ))}
                     </ul>
-                    <button onClick={handleSave} disabled={saving}>
+                    <button onClick={handleSave} disabled={saving} className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50">
                         {saving ? 'Saving...' : 'Save'}
                     </button>
-                    {saved && <p>Saved</p>}
-                </>
+                    {saved && <p className="text-sm text-green-700">Saved</p>}
+                </section>
             )}
         </main>
     )
