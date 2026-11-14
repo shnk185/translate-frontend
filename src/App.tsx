@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { getLanguages, saveKnown, translate } from './api'
-import type { TranslateResult } from './api'
+import { getLanguages, getPresets, saveKnown, translate } from './api'
+import type { TranslateResult, Preset } from './api'
 
 export default function App() {
     const [query, setQuery] = useState('')
-    const [preset, setPreset] = useState(1)
+    const [presets, setPresets] = useState<Preset[]>([])
+    const [preset, setPreset] = useState<number | null>(null)
     const [result, setResult] = useState<TranslateResult | null>(null)
     const [loading, setLoading] = useState(false)
     const [unknown, setUnknown] = useState<Set<number>>(new Set())
@@ -16,11 +17,13 @@ export default function App() {
     const [destLang, setDestLang] = useState('')
 
     useEffect(() => {
-        getLanguages()
-            .then(langs => {
+        Promise.all([getLanguages(), getPresets()])
+            .then(([langs, ps]) => {
                 setLanguages(langs)
                 setSourceLang(langs[0] ?? '')
                 setDestLang(langs[1] ?? langs[0] ?? '')
+                setPresets(ps)
+                setPreset(ps[0]?.id ?? null)
             })
             .catch(error => setError(error instanceof  Error ? error.message : 'Failed to load languages'))
     }, [])
@@ -83,6 +86,16 @@ export default function App() {
                     onChange={(e) => setDestLang(e.target.value)}>
                     {languages.map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+                    Preset
+                    <select
+                        className="rounded-lg border border-gray-300 p-2 font-normal"
+                        value={preset ?? ''}
+                        onChange={e => setPreset(Number(e.target.value))}
+                    >
+                        {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
                 </label>
             </div>
             <div className="space-y-3">
