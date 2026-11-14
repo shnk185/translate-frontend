@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { saveKnown, translate } from './api'
+import { useEffect, useState } from 'react'
+import { getLanguages, saveKnown, translate } from './api'
 import type { TranslateResult } from './api'
 
 export default function App() {
@@ -11,6 +11,19 @@ export default function App() {
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState('')
+    const [languages, setLanguages] = useState<string[]>([])
+    const [sourceLang, setSourceLang] = useState('')
+    const [destLang, setDestLang] = useState('')
+
+    useEffect(() => {
+        getLanguages()
+            .then(langs => {
+                setLanguages(langs)
+                setSourceLang(langs[0] ?? '')
+                setDestLang(langs[1] ?? langs[0] ?? '')
+            })
+            .catch(error => setError(error instanceof  Error ? error.message : 'Failed to load languages'))
+    }, [])
 
     async function handleTranslate() {
         setLoading(true)
@@ -18,7 +31,7 @@ export default function App() {
         setSaved(false)
         setUnknown(new Set())
         try {
-            setResult(await translate({query, source_lang: 'Vietnamese (Northern)', dest_lang: 'English', preset }))
+            setResult(await translate({query, source_lang: sourceLang, dest_lang: destLang, preset }))
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Request failed')
         } finally {
@@ -52,12 +65,32 @@ export default function App() {
 
     return (
         <main className="mx-auto max-w-2xl space-y-6 p-6">
+            <div className="flex gap-3">
+                <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
+                    From
+                <select
+                    className="rounded-lg border border-gray-300 p-2"
+                    value={sourceLang}
+                    onChange={(e) => setSourceLang(e.target.value)}>
+                    {languages.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+                </label>
+                <label className="flex flex-1 flex-col gap-1 text-sm font-medium text-gray-700">
+                    To
+                <select
+                    className="rounded-lg border border-gray-300 p-2"
+                    value={destLang}
+                    onChange={(e) => setDestLang(e.target.value)}>
+                    {languages.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+                </label>
+            </div>
             <div className="space-y-3">
             <textarea className="h-28 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
                       value={query} onChange={e => setQuery(e.target.value)}></textarea>
             <button
                 className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                onClick={handleTranslate} disabled={loading || !query}>
+                onClick={handleTranslate} disabled={loading || !query || !sourceLang || !destLang}>
                 {loading ? 'Translating...' : 'Translate'}
             </button>
             </div>

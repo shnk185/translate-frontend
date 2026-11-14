@@ -2,6 +2,13 @@ export type WordItem = { chunk: string; meaning: string; id: number; known: bool
 export type TranslateResult = { id: number; translation: string; words: WordItem[] }
 export type TranslateRequest = { query: string; source_lang: string; dest_lang: string; preset: number }
 export type ChunkStatus = { id: number; status: boolean }
+export type LanguagesResponse = { languages: string[] }
+
+export async function getLanguages(): Promise<string[]> {
+    const res = await fetch('/api/languages')
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+    return (await res.json()).languages
+}
 
 export async function translate(body: TranslateRequest): Promise<TranslateResult> {
     const res = await fetch('/api/translate', {
